@@ -168,7 +168,7 @@ func (ss *SimpleSession) Destroy(res http.ResponseWriter) error {
 		Name:   ss.name,
 		Value:  "",
 		Path:   ss.option.Path,
-		Doamin: ss.option.Domain,
+		Domain: ss.option.Domain,
 		MaxAge: -1,
 	}
 	http.SetCookie(res, cookie)
