@@ -20,8 +20,6 @@ import (
 	"time"
 )
 
-var fmutex sync.RWMutex
-
 const (
 	sidLength = 32
 	sfileDir  = "/tmp"
@@ -41,9 +39,8 @@ func New(res http.ResponseWriter, option *Option) (*SimpleSession, error) {
 		return nil, err
 	}
 
-	// Storing session file in temp directory
 	fpath := filepath.Join(sfileDir, "gosession_"+id)
-	// Storing session state
+
 	ss := &SimpleSession{
 		name:   "GSESSIONID",
 		id:     id,
@@ -56,6 +53,7 @@ func New(res http.ResponseWriter, option *Option) (*SimpleSession, error) {
 		Name:     ss.name,
 		Value:    ss.id,
 		Path:     ss.option.Path,
+		Domain:   ss.option.Domain,
 		MaxAge:   ss.option.MaxAge,
 		Secure:   ss.option.Secure,
 		HttpOnly: ss.option.HttpOnly,
@@ -82,14 +80,14 @@ func (ss *SimpleSession) Set(key string, val interface{}) {
 }
 
 func (ss *SimpleSession) Get(key string) interface{} {
-	if val, ok := ss.data[key]; ok {
+	if val, found := ss.data[key]; found {
 		return val
 	}
 	return nil
 }
 
 func (ss *SimpleSession) Del(key string) {
-	if _, ok := ss.data[key]; ok {
+	if _, found := ss.data[key]; found {
 		delete(ss.data, key)
 	}
 }
@@ -100,6 +98,7 @@ func (ss *SimpleSession) Write(res http.ResponseWriter, req *http.Request) error
 		return err
 	}
 
+	var fmutex = &sync.RWMutex{}
 	fmutex.Lock()
 	fp, err := os.OpenFile(ss.fpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
@@ -124,6 +123,7 @@ func Read(req *http.Request) (*SimpleSession, error) {
 
 	option := &Option{
 		Path:     cke.Path,
+		Domain:   cke.Domain,
 		MaxAge:   cke.MaxAge,
 		Secure:   cke.Secure,
 		HttpOnly: cke.HttpOnly,
@@ -168,6 +168,7 @@ func (ss *SimpleSession) Destroy(res http.ResponseWriter) error {
 		Name:   ss.name,
 		Value:  "",
 		Path:   ss.option.Path,
+		Doamin: ss.option.Domain,
 		MaxAge: -1,
 	}
 	http.SetCookie(res, cookie)
@@ -221,6 +222,7 @@ func unserialize(src []byte, dst map[string]interface{}) error {
 
 type Option struct {
 	Path     string
+	Domain   string
 	MaxAge   int
 	Secure   bool
 	HttpOnly bool
