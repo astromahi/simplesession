@@ -16,15 +16,15 @@ var testData = []map[string]interface{}{
 }
 
 func TestGenerateId(t *testing.T) {
-	list := make([]string, 10000)
-	for i := 0; i < 10000; i++ {
+	list := make([]string, 100000)
+	for i := 0; i < 100000; i++ {
 		id, err := generateId()
 		if err != nil {
 			t.Error(err)
 		}
 		for _, value := range list {
 			if id == value {
-				t.Errorf("Collision: %s", id)
+				t.Errorf("Collision: %s; Round: %d", id, i)
 			}
 		}
 		list[i] = id
