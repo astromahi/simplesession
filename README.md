@@ -13,7 +13,9 @@ File based session support for Golang
 
 ### Usage
 
-1.  Creating New Session
+1.  Create New Session
+    
+    New creates a fresh session environment
 
         option := &simplesession.Option{
             Path:     "/",
@@ -30,10 +32,10 @@ File based session support for Golang
 
         // Do something with session
 
-2.  Setting Session Data
+2.  Set Session Data
     
-    simplesession uses map[string]interface{} as its storage for handling data at runtime
-    for improving efficiency
+    simplesession uses map[string]interface{} as its storage for handling data at runtime which
+    greatly improves the efficiency
 
         session.Set(key, val)
 
@@ -65,7 +67,7 @@ File based session support for Golang
 
 5.  Get Session Data
     
-    Get return the stored data from read session
+    Get returns the stored data from read session
 
         data := session.Get(key)
 
@@ -74,7 +76,7 @@ File based session support for Golang
 
 6.  Delete Session Data
     
-    Del delete the user session data from session
+    Del deletes the user session data from session
 
         session.Del("id")
 
