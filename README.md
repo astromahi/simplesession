@@ -28,7 +28,7 @@ File based session support for Golang
             return err
         }
 
-        Do something with session
+        // Do something with session
 
 2.  Setting Session Data
     
@@ -42,7 +42,7 @@ File based session support for Golang
         
 3.  Write Session
 
-    Write writes the session data to file for persistent and later use.   
+    Write writes the session data to file for persistent and later use.  
     It takes http.ResponseWriter, http.Request as parameter
 
         err := session.Write(res, req)
@@ -53,7 +53,7 @@ File based session support for Golang
 
 4.  Read Session
     
-    Read reads the data from stored session.
+    Read reads the data from stored session.  
     It takes http.Request and gives stored session
     
         session, err := simplesession.Read(req)
@@ -61,7 +61,7 @@ File based session support for Golang
             return err
         }
         
-        Do something with session
+        // Do something with session
 
 5.  Get Session Data
     
