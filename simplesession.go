@@ -25,14 +25,6 @@ const (
 	sfileDir  = "/tmp"
 )
 
-type SimpleSession struct {
-	name   string
-	id     string
-	fpath  string
-	option *Option
-	data   map[string]interface{}
-}
-
 func New(res http.ResponseWriter, option *Option) (*SimpleSession, error) {
 	id, err := generateId()
 	if err != nil {
@@ -61,6 +53,14 @@ func New(res http.ResponseWriter, option *Option) (*SimpleSession, error) {
 	http.SetCookie(res, cookie)
 
 	return ss, nil
+}
+
+type SimpleSession struct {
+	name   string
+	id     string
+	fpath  string
+	option *Option
+	data   map[string]interface{}
 }
 
 func (ss *SimpleSession) Name() string {
@@ -93,12 +93,13 @@ func (ss *SimpleSession) Del(key string) {
 }
 
 func (ss *SimpleSession) Write(res http.ResponseWriter, req *http.Request) error {
-	sData, err := serialize(ss.data)
+	serialized, err := serialize(ss.data)
 	if err != nil {
 		return err
 	}
 
 	var fmutex = &sync.RWMutex{}
+
 	fmutex.Lock()
 	fp, err := os.OpenFile(ss.fpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
@@ -106,7 +107,7 @@ func (ss *SimpleSession) Write(res http.ResponseWriter, req *http.Request) error
 	}
 	defer fp.Close()
 
-	if _, err = fp.Write(sData); err != nil {
+	if _, err = fp.Write(serialized); err != nil {
 		return errors.New("simplesession: could not write session file")
 	}
 	defer fmutex.Unlock()
@@ -130,24 +131,25 @@ func Read(req *http.Request) (*SimpleSession, error) {
 	}
 
 	fpath := filepath.Join(sfileDir, "gosession_"+cke.Value)
+
 	fp, err := os.OpenFile(fpath, os.O_RDONLY, 0400)
 	if err != nil {
 		return nil, errors.New("simplesession: could not open session file")
 	}
 	defer fp.Close()
 
-	buf := make([]byte, 128)
-	var temp []byte
+	buf := make([]byte, 256)
+	var serialized []byte
 	for {
 		_, err = fp.Read(buf)
 		if err != nil || err == io.EOF {
 			break
 		}
-		temp = append(temp, buf[0:]...)
+		serialized = append(serialized, buf[0:]...)
 	}
 
 	data := make(map[string]interface{})
-	if err = unserialize(temp, data); err != nil {
+	if err = unserialize(serialized, data); err != nil {
 		return nil, err
 	}
 
