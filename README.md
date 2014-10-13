@@ -1,7 +1,7 @@
 simplesession
 =============
 
-File based session support for Golang
+File based session support for Golang  -  [![Build Status](https://drone.io/github.com/astromahi/simplesession/status.png)](https://drone.io/github.com/astromahi/simplesession/latest)
 
 ### Features
 
