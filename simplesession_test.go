@@ -5,6 +5,46 @@
 package simplesession
 
 import (
-	"net/http"
+	"fmt"
 	"testing"
 )
+
+var testData = []map[string]interface{}{
+	{"id": 1001},
+	{"name": "John Doe"},
+	{"auth": true},
+}
+
+func TestGenerateId(t *testing.T) {
+	list := make([]string, 10000)
+	for i := 0; i < 10000; i++ {
+		id, err := generateId()
+		if err != nil {
+			t.Error(err)
+		}
+		for _, value := range list {
+			if id == value {
+				t.Errorf("Collision: %s", id)
+			}
+		}
+		list[i] = id
+	}
+}
+
+func TestSerialization(t *testing.T) {
+	var err error
+	var serialized []byte
+	var unserialized map[string]interface{}
+	for _, value := range testData {
+		if serialized, err = serialize(value); err != nil {
+			t.Error(err)
+		}
+		unserialized = make(map[string]interface{})
+		if err := unserialize(serialized, unserialized); err != nil {
+			t.Error(err)
+		}
+		if fmt.Sprintf("%v", value) != fmt.Sprintf("%v", unserialized) {
+			t.Errorf("Expected: %v, Got: %v", value, unserialized)
+		}
+	}
+}
