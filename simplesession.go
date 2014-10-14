@@ -7,7 +7,7 @@ package simplesession
 import (
 	"bytes"
 	"crypto/rand"
-	"crypto/sha256"
+	"crypto/sha1"
 	"encoding/gob"
 	"encoding/hex"
 	"errors"
@@ -138,7 +138,7 @@ func Read(req *http.Request) (*SimpleSession, error) {
 	}
 	defer fp.Close()
 
-	buf := make([]byte, 256)
+	buf := make([]byte, 128)
 	var serialized []byte
 	for {
 		_, err = fp.Read(buf)
@@ -185,10 +185,10 @@ func (ss *SimpleSession) Destroy(res http.ResponseWriter) error {
 // generateId generates a session id
 func generateId() (string, error) {
 
-	hash := sha256.New()
+	hash := sha1.New()
 	io.WriteString(hash, strconv.FormatInt(time.Now().Unix(), 10))
 
-	uran := make([]byte, 2048)
+	uran := make([]byte, 1024)
 	if _, err := io.ReadFull(rand.Reader, uran); err != nil {
 		return "", errors.New("simplesession: could not generate random key")
 	}
