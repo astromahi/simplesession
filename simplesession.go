@@ -101,9 +101,13 @@ func (ss *SimpleSession) Write(res http.ResponseWriter, req *http.Request) error
 	var fmutex = &sync.RWMutex{}
 
 	fmutex.Lock()
-	fp, err := os.OpenFile(ss.fpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+	fp, err := os.OpenFile(ss.fpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return errors.New("simplesession: could not open session file")
+	}
+
+	if err = os.Chown(ss.fpath, os.Getuid(), os.Getgid()); err != nil {
+		return errors.New("simplesession: could not change file owner")
 	}
 	defer fp.Close()
 
