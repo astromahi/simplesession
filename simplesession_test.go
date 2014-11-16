@@ -24,36 +24,50 @@ var testData = []map[string]interface{}{
 }
 
 func TestGenerateId(t *testing.T) {
-	list := make([]string, 100000)
-	for i := 0; i < 100000; i++ {
-		id, err := generateId()
-		if err != nil {
-			t.Error(err)
-		}
-		for _, value := range list {
-			if id == value {
-				t.Errorf("Collision: %s; Rounds: %d", id, i)
+
+	count := 0
+	list := make([]string, 3000)
+
+	for i := 0; i < 3; i++ {
+		for j := 0; j < 1000; j++ {
+			id, err := generateId()
+			if err != nil {
+				t.Error(err)
 			}
+			for _, value := range list {
+				if id == value {
+					t.Errorf("Collision: %s, Cycle(s): %d, Round(s): %d", id, i, j)
+				}
+			}
+			list[count] = id
+			count++
 		}
-		list[i] = id
 	}
 }
 
 func TestSerialization(t *testing.T) {
-	gob.Register(TestType{})
+
 	var err error
 	var serialized []byte
 	var unserialized map[string]interface{}
+
 	for _, value := range testData {
 		if serialized, err = serialize(value); err != nil {
 			t.Error(err)
 		}
+
 		unserialized = make(map[string]interface{})
-		if err := unserialize(serialized, unserialized); err != nil {
+
+		if err = unserialize(serialized, unserialized); err != nil {
 			t.Error(err)
 		}
+
 		if fmt.Sprintf("%+v", value) != fmt.Sprintf("%+v", unserialized) {
 			t.Errorf("Expected: %+v, Got: %+v", value, unserialized)
 		}
 	}
+}
+
+func init() {
+	gob.Register(TestType{})
 }
