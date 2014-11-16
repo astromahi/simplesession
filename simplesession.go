@@ -80,14 +80,14 @@ func (ss *SimpleSession) Set(key string, val interface{}) {
 }
 
 func (ss *SimpleSession) Get(key string) interface{} {
-	if val, found := ss.data[key]; found {
+	if val, ok := ss.data[key]; ok {
 		return val
 	}
 	return nil
 }
 
 func (ss *SimpleSession) Del(key string) {
-	if _, found := ss.data[key]; found {
+	if _, ok := ss.data[key]; ok {
 		delete(ss.data, key)
 	}
 }
@@ -171,11 +171,14 @@ func Read(req *http.Request) (*SimpleSession, error) {
 func (ss *SimpleSession) Destroy(res http.ResponseWriter) error {
 
 	cookie := &http.Cookie{
-		Name:   ss.name,
-		Value:  "",
-		Path:   ss.option.Path,
-		Domain: ss.option.Domain,
-		MaxAge: -1,
+		Name:    ss.name,
+		Value:   "",
+		Path:    ss.option.Path,
+		Domain:  ss.option.Domain,
+		Expires: time.Unix(1, 0),
+		//MaxAge:   -1,
+		Secure:   false,
+		HttpOnly: true,
 	}
 	http.SetCookie(res, cookie)
 
