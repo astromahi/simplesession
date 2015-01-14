@@ -42,11 +42,11 @@ func New(res http.ResponseWriter, option *Option) (*SimpleSession, error) {
 	}
 
 	cookie := &http.Cookie{
-		Name:     ss.name,
-		Value:    ss.id,
-		Path:     ss.option.Path,
-		Domain:   ss.option.Domain,
-		MaxAge:   ss.option.MaxAge,
+		Name:   ss.name,
+		Value:  ss.id,
+		Path:   ss.option.Path,
+		Domain: ss.option.Domain,
+		//MaxAge:   ss.option.MaxAge,
 		Secure:   ss.option.Secure,
 		HttpOnly: ss.option.HttpOnly,
 	}
@@ -92,13 +92,63 @@ func (ss *SimpleSession) Del(key string) {
 	}
 }
 
-func (ss *SimpleSession) Write(res http.ResponseWriter, req *http.Request) error {
+// Read reads stored session
+func Read(req *http.Request) (*SimpleSession, error) {
+	cke, err := req.Cookie("GSESSIONID")
+	if err != nil {
+		return nil, errors.New("simplesession: session not set")
+	}
+
+	option := &Option{
+		Path:   cke.Path,
+		Domain: cke.Domain,
+		//MaxAge:   cke.MaxAge,
+		Secure:   cke.Secure,
+		HttpOnly: cke.HttpOnly,
+	}
+
+	fpath := filepath.Join(sfileDir, "gosession_"+cke.Value)
+
+	fp, err := os.OpenFile(fpath, os.O_RDONLY, 0400)
+	if err != nil {
+		return nil, errors.New("simplesession: could not open session file")
+	}
+	defer fp.Close()
+
+	var serialized []byte
+	buf := make([]byte, 128)
+	for {
+		var n int
+		n, err = fp.Read(buf)
+		serialized = append(serialized, buf[0:n]...)
+		if err != nil || err == io.EOF {
+			break
+		}
+	}
+
+	data := make(map[string]interface{})
+	if err = unserialize(serialized, data); err != nil {
+		return nil, err
+	}
+
+	ss := &SimpleSession{
+		name:   cke.Name,
+		id:     cke.Value,
+		fpath:  fpath,
+		option: option,
+		data:   data,
+	}
+
+	return ss, nil
+}
+
+func (ss *SimpleSession) Write() error {
 	serialized, err := serialize(ss.data)
 	if err != nil {
 		return err
 	}
 
-	var fmutex = &sync.RWMutex{}
+	var fmutex sync.RWMutex
 
 	fmutex.Lock()
 	fp, err := os.OpenFile(ss.fpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
@@ -119,64 +169,15 @@ func (ss *SimpleSession) Write(res http.ResponseWriter, req *http.Request) error
 	return nil
 }
 
-// Read reads stored session
-func Read(req *http.Request) (*SimpleSession, error) {
-	cke, err := req.Cookie("GSESSIONID")
-	if err != nil {
-		return nil, errors.New("simplesession: session not set")
-	}
-
-	option := &Option{
-		Path:     cke.Path,
-		Domain:   cke.Domain,
-		MaxAge:   cke.MaxAge,
-		Secure:   cke.Secure,
-		HttpOnly: cke.HttpOnly,
-	}
-
-	fpath := filepath.Join(sfileDir, "gosession_"+cke.Value)
-
-	fp, err := os.OpenFile(fpath, os.O_RDONLY, 0400)
-	if err != nil {
-		return nil, errors.New("simplesession: could not open session file")
-	}
-	defer fp.Close()
-
-	buf := make([]byte, 128)
-	var serialized []byte
-	for {
-		_, err = fp.Read(buf)
-		if err != nil || err == io.EOF {
-			break
-		}
-		serialized = append(serialized, buf[0:]...)
-	}
-
-	data := make(map[string]interface{})
-	if err = unserialize(serialized, data); err != nil {
-		return nil, err
-	}
-
-	ss := &SimpleSession{
-		name:   cke.Name,
-		id:     cke.Value,
-		fpath:  fpath,
-		option: option,
-		data:   data,
-	}
-
-	return ss, nil
-}
-
 func (ss *SimpleSession) Destroy(res http.ResponseWriter) error {
 
 	cookie := &http.Cookie{
-		Name:    ss.name,
-		Value:   "",
-		Path:    ss.option.Path,
-		Domain:  ss.option.Domain,
-		Expires: time.Unix(1, 0),
-		//MaxAge:   -1,
+		Name:   ss.name,
+		Value:  "",
+		Path:   ss.option.Path,
+		Domain: ss.option.Domain,
+		//Expires: time.Unix(1, 0),
+		MaxAge:   -1,
 		Secure:   false,
 		HttpOnly: true,
 	}
@@ -205,10 +206,10 @@ func generateId() (string, error) {
 
 	fpath := filepath.Join(sfileDir, "gosession_"+id)
 	if _, err := os.Stat(fpath); err == nil {
-		generateId()
+		return generateId()
+	} else {
+		return id[0:sidLength], nil
 	}
-
-	return id[0:sidLength], nil
 }
 
 // serialize encodes a value using binary.
@@ -230,9 +231,9 @@ func unserialize(src []byte, dst map[string]interface{}) error {
 }
 
 type Option struct {
-	Path     string
-	Domain   string
-	MaxAge   int
+	Path   string
+	Domain string
+	//MaxAge   int
 	Secure   bool
 	HttpOnly bool
 }
