@@ -21,18 +21,18 @@ import (
 )
 
 const (
-	sidLength = 32  // Session ID length
-	sfileDir  = "/tmp"  // Directory to store the session file
+	sidLength = 32     // Session ID length
+	sfileDir  = "/tmp" // Directory to store the session file
 )
 
 // Option --------------------------------------------------------------------
 
-// Option stores configuration for a session & cookie.
+// Option stores configuration for a session cookie.
 //
 // Fields are a subset of http.Cookie fields.
 type Option struct {
-	Path     string
-	Domain   string
+	Path   string
+	Domain string
 	// MaxAge=0 means no 'Max-Age' attribute specified.
 	// MaxAge<0 means delete cookie now, equivalently 'Max-Age: 0'.
 	// MaxAge>0 means Max-Age attribute present and given in seconds.
@@ -170,7 +170,7 @@ func Read(req *http.Request) (*SimpleSession, error) {
 	return ss, nil
 }
 
-// Write flush the locally variable stored data onto session file
+// Write flush the locally stored data onto session file
 func (ss *SimpleSession) Write() error {
 	serialized, err := serialize(ss.data)
 	if err != nil {
@@ -259,4 +259,3 @@ func unserialize(src []byte, dst map[string]interface{}) error {
 	}
 	return nil
 }
-
