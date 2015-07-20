@@ -42,11 +42,12 @@ func New(res http.ResponseWriter, option *Option) (*SimpleSession, error) {
 	}
 
 	cookie := &http.Cookie{
-		Name:   ss.name,
-		Value:  ss.id,
-		Path:   ss.option.Path,
-		Domain: ss.option.Domain,
-		//MaxAge:   ss.option.MaxAge,
+		Name:     ss.name,
+		Value:    ss.id,
+		Path:     ss.option.Path,
+		Domain:   ss.option.Domain,
+		Expires:  ss.option.Expires,
+		MaxAge:   ss.option.MaxAge,
 		Secure:   ss.option.Secure,
 		HttpOnly: ss.option.HttpOnly,
 	}
@@ -100,9 +101,10 @@ func Read(req *http.Request) (*SimpleSession, error) {
 	}
 
 	option := &Option{
-		Path:   cke.Path,
-		Domain: cke.Domain,
-		//MaxAge:   cke.MaxAge,
+		Path:     cke.Path,
+		Domain:   cke.Domain,
+		Expires:  cke.Expires,
+		MaxAge:   cke.MaxAge,
 		Secure:   cke.Secure,
 		HttpOnly: cke.HttpOnly,
 	}
@@ -172,11 +174,11 @@ func (ss *SimpleSession) Write() error {
 func (ss *SimpleSession) Destroy(res http.ResponseWriter) error {
 
 	cookie := &http.Cookie{
-		Name:   ss.name,
-		Value:  "",
-		Path:   ss.option.Path,
-		Domain: ss.option.Domain,
-		//Expires: time.Unix(1, 0),
+		Name:     ss.name,
+		Value:    "",
+		Path:     ss.option.Path,
+		Domain:   ss.option.Domain,
+		Expires:  time.Unix(1, 0),
 		MaxAge:   -1,
 		Secure:   false,
 		HttpOnly: true,
@@ -231,9 +233,10 @@ func unserialize(src []byte, dst map[string]interface{}) error {
 }
 
 type Option struct {
-	Path   string
-	Domain string
-	//MaxAge   int
+	Path     string
+	Domain   string
+	Expires  time.Time
+	MaxAge   int
 	Secure   bool
 	HttpOnly bool
 }
