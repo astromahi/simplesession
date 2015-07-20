@@ -65,7 +65,6 @@ func New(res http.ResponseWriter, option *Option) (*SimpleSession, error) {
 		Value:    ss.id,
 		Path:     ss.option.Path,
 		Domain:   ss.option.Domain,
-		Expires:  ss.option.Expires,
 		MaxAge:   ss.option.MaxAge,
 		Secure:   ss.option.Secure,
 		HttpOnly: ss.option.HttpOnly,
@@ -129,7 +128,6 @@ func Read(req *http.Request) (*SimpleSession, error) {
 	option := &Option{
 		Path:     cke.Path,
 		Domain:   cke.Domain,
-		Expires:  cke.Expires,
 		MaxAge:   cke.MaxAge,
 		Secure:   cke.Secure,
 		HttpOnly: cke.HttpOnly,
@@ -206,7 +204,6 @@ func (ss *SimpleSession) Destroy(res http.ResponseWriter) error {
 		Value:    "",
 		Path:     ss.option.Path,
 		Domain:   ss.option.Domain,
-		Expires:  time.Unix(1, 0),
 		MaxAge:   -1,
 		Secure:   false,
 		HttpOnly: true,
