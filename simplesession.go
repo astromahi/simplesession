@@ -21,10 +21,29 @@ import (
 )
 
 const (
-	sidLength = 32
-	sfileDir  = "/tmp"
+	sidLength = 32  // Session ID length
+	sfileDir  = "/tmp"  // Directory to store the session file
 )
 
+// Option --------------------------------------------------------------------
+
+// Option stores configuration for a session & cookie.
+//
+// Fields are a subset of http.Cookie fields.
+type Option struct {
+	Path     string
+	Domain   string
+	// MaxAge=0 means no 'Max-Age' attribute specified.
+	// MaxAge<0 means delete cookie now, equivalently 'Max-Age: 0'.
+	// MaxAge>0 means Max-Age attribute present and given in seconds.
+	MaxAge   int
+	Secure   bool
+	HttpOnly bool
+}
+
+// Session --------------------------------------------------------------------
+
+// New is called to create a new session instance
 func New(res http.ResponseWriter, option *Option) (*SimpleSession, error) {
 	id, err := generateId()
 	if err != nil {
@@ -56,6 +75,7 @@ func New(res http.ResponseWriter, option *Option) (*SimpleSession, error) {
 	return ss, nil
 }
 
+// SimpleSession stores the session data and option configuration for a session.
 type SimpleSession struct {
 	name   string
 	id     string
@@ -64,22 +84,27 @@ type SimpleSession struct {
 	data   map[string]interface{}
 }
 
+// Name returns the name of the registered session
 func (ss *SimpleSession) Name() string {
 	return ss.name
 }
 
+// Id returns the session id currently in use
 func (ss *SimpleSession) Id() string {
 	return ss.id
 }
 
+// FilePath gives the session directory where we store the session file
 func (ss *SimpleSession) FilePath() string {
 	return ss.fpath
 }
 
+// Set stores the value by given key to local session variable
 func (ss *SimpleSession) Set(key string, val interface{}) {
 	ss.data[key] = val
 }
 
+// Get retrieves the value by given key from local session variable
 func (ss *SimpleSession) Get(key string) interface{} {
 	if val, ok := ss.data[key]; ok {
 		return val
@@ -87,13 +112,14 @@ func (ss *SimpleSession) Get(key string) interface{} {
 	return nil
 }
 
+// Del deletes the session data by key-value pair
 func (ss *SimpleSession) Del(key string) {
 	if _, ok := ss.data[key]; ok {
 		delete(ss.data, key)
 	}
 }
 
-// Read reads stored session
+// Read reads stored session from session file
 func Read(req *http.Request) (*SimpleSession, error) {
 	cke, err := req.Cookie("GSESSIONID")
 	if err != nil {
@@ -144,6 +170,7 @@ func Read(req *http.Request) (*SimpleSession, error) {
 	return ss, nil
 }
 
+// Write flush the locally variable stored data onto session file
 func (ss *SimpleSession) Write() error {
 	serialized, err := serialize(ss.data)
 	if err != nil {
@@ -171,6 +198,7 @@ func (ss *SimpleSession) Write() error {
 	return nil
 }
 
+// Destroy completely destroys the session including data stored on session file
 func (ss *SimpleSession) Destroy(res http.ResponseWriter) error {
 
 	cookie := &http.Cookie{
@@ -192,7 +220,7 @@ func (ss *SimpleSession) Destroy(res http.ResponseWriter) error {
 	return nil
 }
 
-// generateId generates a session id
+// generateId generates a unique session id
 func generateId() (string, error) {
 
 	hash := sha1.New()
@@ -232,11 +260,3 @@ func unserialize(src []byte, dst map[string]interface{}) error {
 	return nil
 }
 
-type Option struct {
-	Path     string
-	Domain   string
-	Expires  time.Time
-	MaxAge   int
-	Secure   bool
-	HttpOnly bool
-}
